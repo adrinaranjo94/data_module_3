@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Visualización de Burbujas con D3 - Tema: Medio Ambiente</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 20px;
+      }
+      h1 {
+        text-align: center;
+      }
+      svg {
+        background-color: #f9f9f9;
+        border: 1px solid #ccc;
+        display: block;
+        margin: 0 auto;
+      }
+      .bubble {
+        fill-opacity: 0.7;
+        stroke: #fff;
+        stroke-width: 2px;
+      }
+      .bubble:hover {
+        fill-opacity: 1;
+      }
+      .label {
+        text-anchor: middle;
+        font-size: 12px;
+        fill: #fff;
+        pointer-events: none; /* Para que el ratón no interfiera al pasar sobre el texto */
+      }
+    </style>
+  </head>
+  <body>
+    <h1>
+      Visualización de Burbujas D3<br />
+      <small>Tema: Palabras Clave de Medio Ambiente</small>
+    </h1>
+
+    <svg id="bubbleChart" width="800" height="600"></svg>
+
+    <script>
+      /* 
+      EJEMPLO DIDÁCTICO: PALABRAS MÁS UTILIZADAS SOBRE MEDIO AMBIENTE
+      word: Palabra clave
+      freq: Frecuencia de uso
+    */
+      const data = [
+        { word: "Reciclaje", freq: 30 },
+        { word: "Contaminación", freq: 25 },
+        { word: "Sostenibilidad", freq: 18 },
+        { word: "Energías Renovables", freq: 15 },
+        { word: "Biodiversidad", freq: 12 },
+        { word: "Residuos", freq: 10 },
+        { word: "Ecología", freq: 28 },
+        { word: "Hábitat", freq: 8 },
+        { word: "Cambio Climático", freq: 20 },
+        { word: "Agua", freq: 22 },
+        { word: "Plástico", freq: 16 },
+        { word: "Bosques", freq: 14 },
+        { word: "Fauna", freq: 9 },
+        { word: "Flora", freq: 9 },
+        { word: "Calentamiento", freq: 17 },
+      ];
+
+      // ----------------------------------------------------------------
+      // CONFIGURACIÓN DEL GRÁFICO
+      // ----------------------------------------------------------------
+      const svg = d3.select("#bubbleChart");
+      const width = +svg.attr("width");
+      const height = +svg.attr("height");
+
+      // Creamos un "pack layout" de D3 para generar la disposición circular de los nodos
+      // Necesitamos transformar nuestro 'data' en un formato jerárquico
+      // Para ello, creamos un objeto con "children"
+      const rootData = {
+        name: "root",
+        children: data.map((d) => ({
+          name: d.word,
+          value: d.freq,
+        })),
+      };
+
+      // Convertimos al formato de jerarquía
+      const root = d3.hierarchy(rootData).sum((d) => d.value); // definimos que "value" es la medida de cada nodo
+
+      // pack() calcula el layout de círculos con tamaños basados en "value"
+      const packLayout = d3.pack().size([width, height]).padding(5);
+
+      // Pasamos nuestro root (hierarchy) por el pack
+      packLayout(root);
+
+      // ----------------------------------------------------------------
+      // ESCALA DE COLOR
+      // ----------------------------------------------------------------
+      // Utilizamos una escala ordinal basada en el número de elementos
+      // y un rango de colores. Adaptar a tu gusto.
+      const colorScale = d3
+        .scaleOrdinal()
+        .domain(data.map((d) => d.word))
+        .range(d3.schemeCategory10);
+
+      // ----------------------------------------------------------------
+      // DIBUJAR BURBUJAS
+      // ----------------------------------------------------------------
+      const nodes = svg
+        .selectAll("g")
+        .data(root.children)
+        .join("g")
+        .attr("transform", (d) => `translate(${d.x}, ${d.y})`);
+
+      // Dibujamos los círculos
+      nodes
+        .append("circle")
+        .attr("class", "bubble")
+        .attr("r", (d) => d.r)
+        .attr("fill", (d) => colorScale(d.data.name));
+
+      // Texto en el centro de cada burbuja
+      // Si la palabra es muy larga y no cabe, se puede acortar
+      nodes
+        .append("text")
+        .attr("class", "label")
+        .text((d) => d.data.name)
+        .attr("dy", "0.3em")
+        .style("font-size", function (d) {
+          // Ajustar el tamaño de texto a partir del radio
+          const radius = d.r;
+          // Aproximación: un texto que quepa en el círculo
+          // Ajustar factor si se quiere más grande/pequeño
+          return Math.min((2 * radius) / d.data.name.length, 16) + "px";
+        });
+
+      /*
+      EXPLICACIÓN:
+      1) Transformamos los datos a un formato "jerárquico" con d3.hierarchy.
+      2) sum(d => d.value) indica que la "value" que d3 usa para calcular el tamaño
+         del círculo es la frecuencia (freq).
+      3) d3.pack() distribuye los nodos en una disposición de círculos no sobrepuestos,
+         basados en el tamaño total disponible (width, height).
+      4) Pintamos cada nodo con un <g>, trasladado a la posición (d.x, d.y),
+         y luego dibujamos un <circle> con radio d.r, calculado por el pack layout.
+      5) Añadimos un <text> centrado en cada burbuja para mostrar la palabra.
+         Ajustamos dinámicamente el tamaño de la fuente en función del radio.
+    */
+
+      // ----------------------------------------------------------------
+      // OPCIONES DE MEJORA O INTERACCIÓN
+      // ----------------------------------------------------------------
+      //  - Añadir un tooltip al pasar el ratón por encima.
+      //  - Mostrar valor de frecuencia con otro texto o en el tooltip.
+      //  - Hacer que el pack sea interactivo, reordenando o añadiendo datos dinámicamente.
+      //  - Cambiar la escala de color por frecuencia en lugar de palabra.
+    </script>
+  </body>
+</html>

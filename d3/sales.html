@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Ejemplo D3 Múltiples Gráficos / Multiple D3 Charts Example</title>
+    <!-- Incluir D3.js desde CDN -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      h1 {
+        text-align: center;
+      }
+      .chart-container {
+        display: inline-block;
+        margin: 20px;
+        vertical-align: top;
+      }
+      svg {
+        background-color: #f9f9f9;
+        border: 1px solid #ccc;
+      }
+      .bar {
+        fill: steelblue;
+      }
+      .bar:hover {
+        fill: orange;
+      }
+      .axis {
+        font-size: 12px;
+      }
+      .line {
+        fill: none;
+        stroke: steelblue;
+        stroke-width: 2px;
+      }
+      .pie-slice {
+        stroke: #fff;
+        stroke-width: 2px;
+      }
+      .pie-label {
+        font-size: 12px;
+        text-anchor: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Dashboard de Ventas / Sales Dashboard</h1>
+
+    <!-- Contenedor para el gráfico de barras -->
+    <div class="chart-container">
+      <h2>Gráfico de Barras / Bar Chart</h2>
+      <svg id="barChart" width="400" height="300"></svg>
+    </div>
+
+    <!-- Contenedor para el gráfico de líneas -->
+    <div class="chart-container">
+      <h2>Gráfico de Líneas / Line Chart</h2>
+      <svg id="lineChart" width="400" height="300"></svg>
+    </div>
+
+    <!-- Contenedor para el gráfico de pastel -->
+    <div class="chart-container">
+      <h2>Gráfico de Pastel / Pie Chart</h2>
+      <svg id="pieChart" width="400" height="300"></svg>
+    </div>
+
+    <script>
+      // -------------------------------------------------------------------
+      // EJEMPLO DE DATOS / EXAMPLE DATA
+      // -------------------------------------------------------------------
+
+      // 1) Datos para el gráfico de barras (Ventas por región)
+      //    Sales by Region
+      const salesByRegion = [
+        { region: "Norte", sales: 150 },
+        { region: "Sur", sales: 200 },
+        { region: "Este", sales: 100 },
+        { region: "Oeste", sales: 180 },
+        { region: "Centro", sales: 130 },
+      ];
+
+      // 2) Datos para el gráfico de líneas (Ventas mensuales a lo largo del tiempo)
+      //    Monthly Sales Over Time
+      const monthlySales = [
+        { month: "Enero", value: 120 },
+        { month: "Febrero", value: 140 },
+        { month: "Marzo", value: 200 },
+        { month: "Abril", value: 180 },
+        { month: "Mayo", value: 220 },
+        { month: "Junio", value: 300 },
+      ];
+
+      // 3) Datos para el gráfico de pastel (Participación por categoría)
+      //    Category Market Share
+      const categoryShare = [
+        { category: "Electrónica", share: 0.35 },
+        { category: "Moda", share: 0.2 },
+        { category: "Hogar", share: 0.25 },
+        { category: "Juguetes", share: 0.1 },
+        { category: "Otros", share: 0.1 },
+      ];
+
+      // -------------------------------------------------------------------
+      // GRÁFICO DE BARRAS / BAR CHART
+      // -------------------------------------------------------------------
+      // Seleccionar el SVG
+      const svgBar = d3.select("#barChart");
+      const widthBar = +svgBar.attr("width");
+      const heightBar = +svgBar.attr("height");
+
+      // Márgenes
+      const marginBar = { top: 20, right: 20, bottom: 40, left: 40 };
+      const innerWidthBar = widthBar - marginBar.left - marginBar.right;
+      const innerHeightBar = heightBar - marginBar.top - marginBar.bottom;
+
+      // Escalas
+      const xScaleBar = d3
+        .scaleBand()
+        .domain(salesByRegion.map((d) => d.region))
+        .range([0, innerWidthBar])
+        .padding(0.1);
+
+      const yScaleBar = d3
+        .scaleLinear()
+        .domain([0, d3.max(salesByRegion, (d) => d.sales)])
+        .range([innerHeightBar, 0])
+        .nice();
+
+      // Grupo principal
+      const gBar = svgBar
+        .append("g")
+        .attr("transform", `translate(${marginBar.left},${marginBar.top})`);
+
+      // Barras
+      gBar
+        .selectAll(".bar")
+        .data(salesByRegion)
+        .join("rect")
+        .attr("class", "bar")
+        .attr("x", (d) => xScaleBar(d.region))
+        .attr("y", (d) => yScaleBar(d.sales))
+        .attr("width", xScaleBar.bandwidth())
+        .attr("height", (d) => innerHeightBar - yScaleBar(d.sales));
+
+      // Eje X
+      gBar
+        .append("g")
+        .attr("transform", `translate(0,${innerHeightBar})`)
+        .call(d3.axisBottom(xScaleBar))
+        .selectAll("text") // Opcional: rotar los labels si son largos
+        .attr("transform", "translate(0,5)rotate(-20)")
+        .style("text-anchor", "end");
+
+      // Eje Y
+      gBar.append("g").call(d3.axisLeft(yScaleBar));
+
+      // -------------------------------------------------------------------
+      // GRÁFICO DE LÍNEAS / LINE CHART
+      // -------------------------------------------------------------------
+      const svgLine = d3.select("#lineChart");
+      const widthLine = +svgLine.attr("width");
+      const heightLine = +svgLine.attr("height");
+      const marginLine = { top: 20, right: 20, bottom: 40, left: 40 };
+      const innerWidthLine = widthLine - marginLine.left - marginLine.right;
+      const innerHeightLine = heightLine - marginLine.top - marginLine.bottom;
+
+      // Escalas
+      const xScaleLine = d3
+        .scalePoint()
+        .domain(monthlySales.map((d) => d.month))
+        .range([0, innerWidthLine])
+        .padding(0.5);
+
+      const yScaleLine = d3
+        .scaleLinear()
+        .domain([0, d3.max(monthlySales, (d) => d.value)])
+        .range([innerHeightLine, 0])
+        .nice();
+
+      const gLine = svgLine
+        .append("g")
+        .attr("transform", `translate(${marginLine.left},${marginLine.top})`);
+
+      // Generador de línea
+      const lineGenerator = d3
+        .line()
+        .x((d) => xScaleLine(d.month))
+        .y((d) => yScaleLine(d.value));
+
+      // Path de la línea
+      gLine
+        .append("path")
+        .datum(monthlySales)
+        .attr("class", "line")
+        .attr("d", lineGenerator);
+
+      // Puntos en la línea
+      gLine
+        .selectAll(".point")
+        .data(monthlySales)
+        .join("circle")
+        .attr("class", "point")
+        .attr("cx", (d) => xScaleLine(d.month))
+        .attr("cy", (d) => yScaleLine(d.value))
+        .attr("r", 4)
+        .attr("fill", "steelblue");
+
+      // Ejes
+      gLine
+        .append("g")
+        .attr("transform", `translate(0,${innerHeightLine})`)
+        .call(d3.axisBottom(xScaleLine));
+
+      gLine.append("g").call(d3.axisLeft(yScaleLine));
+
+      // -------------------------------------------------------------------
+      // GRÁFICO DE PASTEL / PIE CHART
+      // -------------------------------------------------------------------
+      const svgPie = d3.select("#pieChart");
+      const widthPie = +svgPie.attr("width");
+      const heightPie = +svgPie.attr("height");
+      const radius = Math.min(widthPie, heightPie) / 2 - 10;
+
+      // Grupo principal centrado
+      const gPie = svgPie
+        .append("g")
+        .attr("transform", `translate(${widthPie / 2}, ${heightPie / 2})`);
+
+      // Creamos la función "pie" que transformará los datos
+      // a ángulos adecuados
+      const pie = d3.pie().value((d) => d.share);
+
+      const pieData = pie(categoryShare);
+
+      // Escala de colores
+      const colorScale = d3
+        .scaleOrdinal()
+        .domain(categoryShare.map((d) => d.category))
+        .range(["#6b486b", "#98abc5", "#8a89a6", "#7b6888", "#d0743c"]);
+
+      // Generador de arcos
+      const arc = d3.arc().innerRadius(0).outerRadius(radius);
+
+      // Dibujar slices
+      gPie
+        .selectAll(".slice")
+        .data(pieData)
+        .join("path")
+        .attr("class", "pie-slice")
+        .attr("d", arc)
+        .attr("fill", (d) => colorScale(d.data.category));
+
+      // Etiquetas de texto en cada porción
+      gPie
+        .selectAll(".pie-label")
+        .data(pieData)
+        .join("text")
+        .attr("class", "pie-label")
+        .attr("transform", (d) => `translate(${arc.centroid(d)})`)
+        .text((d) => d.data.category);
+
+      // Opcional: podrías agregar un texto indicando % (ej. d.data.share * 100)
+      // Ejemplo:
+      // .text(d => `${d.data.category} (${(d.data.share * 100).toFixed(0)}%)`);
+    </script>
+  </body>
+</html>

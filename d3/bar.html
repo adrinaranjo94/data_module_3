@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Ejemplo D3</title>
+    <!-- Incluir D3.js desde CDN -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      /* Estilos mínimos para nuestro SVG */
+      svg {
+        background-color: #f9f9f9;
+        margin: 20px;
+        border: 1px solid #ccc;
+      }
+      .bar {
+        fill: steelblue;
+      }
+      .bar:hover {
+        fill: orange;
+      }
+      .axis {
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Gráfico de Barras con D3.js / D3.js Bar Chart</h1>
+    <!-- Contenedor para nuestro gráfico -->
+    <svg id="myChart" width="600" height="300"></svg>
+
+    <script>
+      // 1. Datos
+      const data = [30, 80, 45, 60, 20, 90, 50, 70];
+      // 2. Dimensiones de la gráfica
+      const width = 600;
+      const height = 300;
+      const margin = { top: 20, right: 20, bottom: 30, left: 40 };
+
+      // 3. Crear escalas
+      const xScale = d3
+        .scaleBand()
+        .domain(data.map((d, i) => i)) // valores discretos: indices
+        .range([margin.left, width - margin.right])
+        .padding(0.1);
+
+      const yScale = d3
+        .scaleLinear()
+        .domain([0, d3.max(data)]) // rango de valores
+        .range([height - margin.bottom, margin.top]);
+
+      // 4. Crear el SVG y dibujar barras
+      const svg = d3.select("#myChart");
+
+      // 4.1 Dibujar barras
+      svg
+        .selectAll(".bar")
+        .data(data)
+        .join("rect")
+        .attr("class", "bar")
+        .attr("x", (d, i) => xScale(i))
+        .attr("y", (d) => yScale(d))
+        .attr("width", xScale.bandwidth())
+        .attr("height", (d) => height - margin.bottom - yScale(d));
+
+      // 5. Ejes
+      const xAxis = d3.axisBottom(xScale).tickFormat((d) => `Item ${d + 1}`);
+      const yAxis = d3.axisLeft(yScale);
+
+      // 5.1 Dibujar eje X
+      svg
+        .append("g")
+        .attr("class", "axis")
+        .attr("transform", `translate(0, ${height - margin.bottom})`)
+        .call(xAxis);
+
+      // 5.2 Dibujar eje Y
+      svg
+        .append("g")
+        .attr("class", "axis")
+        .attr("transform", `translate(${margin.left},0)`)
+        .call(yAxis);
+    </script>
+  </body>
+</html>
